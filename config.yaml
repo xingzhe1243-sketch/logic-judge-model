@@ -2,7 +2,7 @@
 # 优先级: CLI参数 > 此文件 > .env > 默认值
 
 api_key: ""              # DeepSeek API密钥（推荐用 DEEPSEEK_API_KEY 环境变量）
-model: deepseek-reasoner # 模型名称
+model: deepseek-chat # 模型名称
 base_url: https://api.deepseek.com/v1
 log_level: WARNING        # DEBUG / INFO / WARNING / ERROR
 llm_provider: deepseek    # deepseek / openai

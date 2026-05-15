@@ -65,7 +65,7 @@ class LogicJudgeModel:
 
         # 根据提供商设置默认参数
         PROVIDERS = {
-            "deepseek": {"base_url": "https://api.deepseek.com/v1", "model": "deepseek-reasoner"},
+            "deepseek": {"base_url": "https://api.deepseek.com/v1", "model": "deepseek-chat"},
             "openai":   {"base_url": "https://api.openai.com/v1",       "model": "gpt-4o"},
         }
         provider_defaults = PROVIDERS.get(self.llm_provider, PROVIDERS["deepseek"])
