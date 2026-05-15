@@ -9,4 +9,4 @@ COPY . .
 
 EXPOSE 8000
 
-CMD ["python", "run.py", "--serve"]
+CMD ["sh", "-c", "python run.py --serve --port ${PORT:-8000}"]
