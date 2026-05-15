@@ -12,7 +12,20 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-STATIC_DIR = Path(__file__).parent / "static"
+STATIC_DIR = Path(__file__).resolve().parent / "static"
+
+def _read_index() -> str:
+    """Read index.html at init time, not on every request"""
+    path = STATIC_DIR / "index.html"
+    if path.is_file():
+        return path.read_text(encoding="utf-8")
+    # fallback: try relative to CWD
+    alt = Path("static/index.html")
+    if alt.is_file():
+        return alt.read_text(encoding="utf-8")
+    return "<html><body><h1>规则解剖引擎</h1><p>API 服务运行中。使用 POST /analyze 提交分析。</p></body></html>"
+
+_INDEX_HTML = _read_index()
 
 from ljmodel import LogicJudgeModel
 from ljmodel.model import ALL_MODULES
@@ -67,10 +80,7 @@ def get_judge() -> LogicJudgeModel:
 @app.get("/", response_class=HTMLResponse)
 async def root():
     """Serve Web UI"""
-    index = STATIC_DIR / "index.html"
-    if index.is_file():
-        return HTMLResponse(index.read_text(encoding="utf-8"))
-    return HTMLResponse("<h1>规则解剖引擎</h1><p>API 可用，静态页面未找到。</p>")
+    return _INDEX_HTML
 
 @app.get("/health", response_model=HealthResponse)
 async def health():
