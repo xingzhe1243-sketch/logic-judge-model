@@ -1,16 +1,14 @@
 """LogicJudgeModel FastAPI Web API Server (async)"""
 
 import asyncio
+import os
 from typing import Optional
-
-from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
-STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 _INDEX_HTML = """<!DOCTYPE html>
 <html lang="zh-CN">
