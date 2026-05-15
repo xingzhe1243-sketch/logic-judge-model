@@ -37,6 +37,9 @@ def _load_config(config_path: str = None) -> dict:
         "api_key": "",
         "model": "deepseek-reasoner",
         "base_url": "https://api.deepseek.com/v1",
+        "doubao_api_key": "",
+        "doubao_base_url": "https://ark.cn-beijing.volces.com/api/v3",
+        "doubao_model": "doubao-pro-32k",
         "log_level": "WARNING",
         "modules": None,
     }
@@ -77,6 +80,12 @@ def _load_config(config_path: str = None) -> dict:
                         config["model"] = val
                     elif key == "DEEPSEEK_BASE_URL":
                         config["base_url"] = val
+                    elif key == "DOUBAO_API_KEY":
+                        config["doubao_api_key"] = val
+                    elif key == "DOUBAO_BASE_URL":
+                        config["doubao_base_url"] = val
+                    elif key == "DOUBAO_MODEL":
+                        config["doubao_model"] = val
                     elif key == "LOG_LEVEL":
                         config["log_level"] = val
             break
@@ -86,6 +95,9 @@ def _load_config(config_path: str = None) -> dict:
         "DEEPSEEK_API_KEY": "api_key",
         "DEEPSEEK_MODEL": "model",
         "DEEPSEEK_BASE_URL": "base_url",
+        "DOUBAO_API_KEY": "doubao_api_key",
+        "DOUBAO_BASE_URL": "doubao_base_url",
+        "DOUBAO_MODEL": "doubao_model",
         "LOG_LEVEL": "log_level",
     }
     for env_key, cfg_key in env_map.items():

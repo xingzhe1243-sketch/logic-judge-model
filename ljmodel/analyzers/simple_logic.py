@@ -77,7 +77,7 @@ def analyze_simple_logic(text: str, kb: dict) -> dict:
         roots_detected.append("真诚陷阱 — 诚实的信念不等于正确的论证")
     analysis["非逻辑思维根源检测"] = roots_detected
 
-    # 谬误检测
+    # 谬误检测 — 初级：原有书名关键词匹配
     detected_fallacies = []
     fallacy_map_sl = {
         "误用传统": "非形式谬误 — 因'过去如此'而认为必须如此",
@@ -102,6 +102,25 @@ def analyze_simple_logic(text: str, kb: dict) -> dict:
     for keyword, desc in fallacy_map_sl.items():
         if keyword in text:
             detected_fallacies.append({"keyword": keyword, "description": desc})
+
+    # 谬误检测 — 进阶：使用统一注册表进行名称匹配（补充新增谬误类型）
+    from ..fallacy_registry import match_name_fallacies
+    existing_names = {d["keyword"] for d in detected_fallacies}
+    for f in match_name_fallacies(text, category_filter=[
+        "关联性谬误", "假设性谬误", "非逻辑思维根源"
+    ]):
+        # 避免重复：检查中文名是否已被检测
+        all_names = {f.chinese_name} | set(a.strip() for a in f.chinese_name.split("/") if a.strip())
+        if not all_names & existing_names:
+            detected_fallacies.append({
+                "keyword": f.chinese_name,
+                "description": f"{f.category} — {f.description[:100]}"
+            })
+            existing_names.add(f.chinese_name)
+
+    # 忽略限定谬误检测
+    detected_fallacies.extend(_detect_secundum_quid_sl(text))
+
     analysis["谬误检测"] = detected_fallacies
 
     # 知识来源评估
@@ -145,3 +164,38 @@ def analyze_simple_logic(text: str, kb: dict) -> dict:
     analysis["论证四步评估"] = eval_notes
 
     return analysis
+
+
+def _detect_secundum_quid_sl(text: str) -> list[dict]:
+    """检测「忽略限定」谬误 — 前提带限定条件，结论悄悄去掉限定"""
+    found = []
+    qualifiers = ["正常", "通常", "一般", "大多数", "大部分", "多数", "许多"]
+    predicate_particles = "都|会|总是|有|可以|要|能"
+    common_verbs = "喜欢|讨厌|擅长|适合|需要|具有|具备|拥有|热爱|反对|支持|认为|觉得|知道|明白|了解"
+
+    import re
+    for marker in ["所以", "因此", "由此可见", "故"]:
+        if marker not in text:
+            continue
+        idx = text.rindex(marker)
+        premise_area = text[:idx]
+        conclusion_area = text[idx:]
+
+        for qual in qualifiers:
+            pattern = re.compile(
+                re.escape(qual) + r"(\w{1,8})(?:" + predicate_particles + r"|" + common_verbs + r")"
+            )
+            for m in pattern.finditer(premise_area):
+                noun = m.group(1)
+                if qual not in conclusion_area:
+                    found.append({
+                        "keyword": "忽略限定",
+                        "description": (
+                            f"前提中「{qual}{noun}」带有限定词「{qual}」，"
+                            f"结论中去掉了该限定，构成忽略限定谬误。"
+                            f"{qual}{noun}的特性不一定适用于所有{noun}。"
+                        )
+                    })
+                    break
+
+    return found

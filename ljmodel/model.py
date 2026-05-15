@@ -18,6 +18,7 @@ from .analyzers import (
     analyze_argumentation, analyze_elements_of_thought, analyze_structured,
     analyze_dialectical, analyze_source_thinking, analyze_simple_logic,
     analyze_llm_primary, build_llm_primary_prompt,
+    analyze_logic_problems,
 )
 
 ALL_MODULES = {
@@ -84,6 +85,17 @@ class LogicJudgeModel:
                 api_key=self.api_key,
                 base_url=self.base_url
             )
+
+        # 豆包/火山引擎大模型客户端（作为逻辑问题猎手2使用）
+        doubao_key = cfg.get("doubao_api_key") or os.environ.get("DOUBAO_API_KEY", "")
+        self.doubao_key = doubao_key
+        self.doubao_base_url = cfg.get("doubao_base_url") or os.environ.get("DOUBAO_BASE_URL", "https://ark.cn-beijing.volces.com/api/v3")
+        self.doubao_model = cfg.get("doubao_model") or os.environ.get("DOUBAO_MODEL", "doubao-pro-32k")
+        if doubao_key:
+            logger.info("豆包大模型客户端已就绪（逻辑问题猎手2）")
+            self.doubao_client = OpenAI(api_key=doubao_key, base_url=self.doubao_base_url)
+        else:
+            self.doubao_client = None
         self.kb = KNOWLEDGE_BASE
         self._cache: dict[str, dict] = {}
         self._cache_max = 64
@@ -207,6 +219,30 @@ class LogicJudgeModel:
                     logger.warning(f"模块 [{name}] 执行异常: {e}")
                     result["modules"][name] = {"error": str(e)}
         logger.info("规则引擎交叉验证完成")
+
+        # 阶段3: 逻辑问题猎手1 — DeepSeek 独立LLM审查
+        if self.client and (run_all or "llm_primary" in modules):
+            logger.info("逻辑问题猎手1搜寻中...")
+            try:
+                result["modules"]["logic_problem_hunter_1"] = analyze_logic_problems(
+                    text, result, self.client, self.model
+                )
+                logger.info("逻辑问题猎手1完成")
+            except Exception as e:
+                logger.warning(f"逻辑问题猎手1异常: {e}")
+                result["modules"]["logic_problem_hunter_1"] = {"error": str(e)}
+
+        # 阶段3b: 逻辑问题猎手2 — 豆包大模型独立审查（提供第二视角交叉验证）
+        if self.doubao_client and (run_all or "llm_primary" in modules):
+            logger.info("逻辑问题猎手2（豆包大模型）搜寻中...")
+            try:
+                result["modules"]["logic_problem_hunter_2"] = analyze_logic_problems(
+                    text, result, self.doubao_client, self.doubao_model
+                )
+                logger.info("逻辑问题猎手2完成")
+            except Exception as e:
+                logger.warning(f"逻辑问题猎手2异常: {e}")
+                result["modules"]["logic_problem_hunter_2"] = {"error": str(e)}
 
         # 阶段3: 综合合成
         result["synthesis"] = synthesize(result)

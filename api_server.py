@@ -132,6 +132,23 @@ function renderResults(data,el){
     lines.forEach(l=>html+='<div class="line'+(l.includes('谬误')?' warn':'')+'">'+esc(l)+'</div>');
     html+='</div></div>';
   });
+  // 逻辑问题猎手 — 独立LLM审查（特殊渲染）
+  function renderHunter(moduleKey, label, fallback){
+    let h = md[moduleKey];
+    if(!h && fallback) h = md[fallback];
+    if(!h || !h['问题列表'] || !h['问题列表'].length) return;
+    html+='<div class="card open"><div class="card-header"><span>'+label+'</span><span class="arrow">▼</span></div><div class="card-body">';
+    h['问题列表'].forEach(function(item){
+      const sev = item['严重程度']||'中';
+      const cls = sev==='高'?'warn':sev==='中'?'':'ok';
+      const ptype = item['问题类型']||'';
+      html+='<div class="line '+cls+'">'+esc(item['修正建议']||'')+'</div>';
+      html+='<div style="padding:0 0 2px 12px;font-size:0.78em;color:#657786;">↳ '+esc(ptype)+' ('+esc(sev)+') — '+esc((item['问题说明']||'').slice(0,150))+'</div>';
+    });
+    html+='</div></div>';
+  }
+  renderHunter('logic_problem_hunter_1', '逻辑问题猎手1 — DeepSeek 深度审查', 'logic_problem_hunter');
+  renderHunter('logic_problem_hunter_2', '逻辑问题猎手2 — 豆包大模型 深度审查');
   el.innerHTML = html;
   el.querySelectorAll('.card-header').forEach(h => h.addEventListener('click',()=>h.parentElement.classList.toggle('open')));
 }
@@ -145,7 +162,7 @@ async function fetchHistory(){
     const rows = await res.json(); if(!rows.length){ list.innerHTML=''; empty.style.display='block'; count.textContent=''; return; }
     count.textContent='共 '+rows.length+' 条';
     list.innerHTML = rows.map(r=>'<div class="history-item" data-id="'+r.id+'"><span class="h-score" style="color:'+(r.score>=70?'#27ae60':r.score>=40?'#f39c12':'#e74c3c')+'">'+r.score+'</span><span class="h-text">'+esc(r.text)+'</span><span class="h-time">'+esc(r.created_at||'')+'</span><button class="btn-sm btn-secondary view-btn" data-id="'+r.id+'">查看</button><button class="btn-sm btn-danger del-btn" data-id="'+r.id+'">删除</button></div>').join('');
-    list.querySelectorAll('.view-btn').forEach(btn=>btn.addEventListener('click',async e=>{e.stopPropagation(); const id=e.target.dataset.id; document.getElementById('historyPanel').classList.remove('open'); const res=await fetch('/history/'+id); renderResults(await res.json(),document.getElementById('results'));}));
+    list.querySelectorAll('.view-btn').forEach(btn=>btn.addEventListener('click',async e=>{e.stopPropagation(); const id=e.target.dataset.id; document.getElementById('historyPanel').classList.remove('open'); const res=await fetch('/history/'+id); const data=await res.json(); renderResults(data.result||data,document.getElementById('results'));}));
     list.querySelectorAll('.del-btn').forEach(btn=>btn.addEventListener('click',async e=>{e.stopPropagation(); if(!confirm('确定删除？')) return; await fetch('/history/'+e.target.dataset.id,{method:'DELETE'}); fetchHistory();}));
   } catch(e){ list.innerHTML='<div style="text-align:center;padding:12px;color:#e74c3c;">加载失败: '+e.message+'</div>'; }
 }

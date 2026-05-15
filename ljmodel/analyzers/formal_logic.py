@@ -78,7 +78,7 @@ def analyze_formal_logic(text: str, kb: dict) -> dict:
             pl_analysis.append("建议: 检查推理模式是有效(肯定前件/否定后件)还是无效(否定前件/肯定后件)")
     analysis["命题逻辑分析"] = pl_analysis
 
-    # 谬误检测
+    # 谬误检测 — 初级：原有书名关键词匹配
     detected_fallacies = []
     fallacy_map = {
         "人身攻击": "关联性谬误 — 攻击人而非论点",
@@ -105,6 +105,20 @@ def analyze_formal_logic(text: str, kb: dict) -> dict:
     for keyword, desc in fallacy_map.items():
         if keyword in text:
             detected_fallacies.append({"keyword": keyword, "description": desc})
+
+    # 谬误检测 — 进阶：使用统一注册表进行名称匹配（补充新增谬误类型）
+    from ..fallacy_registry import match_name_fallacies
+    existing_names = {d["keyword"] for d in detected_fallacies}
+    for f in match_name_fallacies(text, category_filter=[
+        "形式谬误", "歧义性谬误", "关联性谬误", "假设性谬误"
+    ]):
+        all_names = {f.chinese_name} | set(a.strip() for a in f.chinese_name.split("/") if a.strip())
+        if not all_names & existing_names:
+            detected_fallacies.append({
+                "keyword": f.chinese_name,
+                "description": f"{f.category} — {f.description[:100]}"
+            })
+            existing_names.add(f.chinese_name)
     analysis["谬误检测"] = detected_fallacies
 
     # 论证结构分析
@@ -145,4 +159,57 @@ def analyze_formal_logic(text: str, kb: dict) -> dict:
             "反驳推理: 指出推不出(论证有缺陷但结论仍可能真)"
         ]
 
+    # 忽略限定谬误检测 — 前提中有限定词但结论中悄悄去掉
+    qualifier_fallacies = _detect_secundum_quid(text)
+    analysis["谬误检测"].extend(qualifier_fallacies)
+
     return analysis
+
+
+def _detect_secundum_quid(text: str) -> list[dict]:
+    """检测「忽略限定」谬误 (secundum quid / a dicto simpliciter)
+
+    识别模式：
+      前提对某类事物带有限定条件（正常/通常/一般/大多数），
+      结论却将限定条件去掉，当作无条件的一般命题使用。
+
+      也检测「以全概偏」(accident fallacy / dicto simpliciter)：
+      将一般规则不加分辨地应用于可能例外的特殊子类。
+    """
+    found = []
+
+    qualifiers = ["正常", "通常", "一般", "大多数", "大部分", "多数", "许多"]
+    # 跟在名词后的常见谓词（都/会/总是/有 + 常见动词）
+    predicate_particles = "都|会|总是|有|可以|要|能"
+    common_verbs = "喜欢|讨厌|擅长|适合|需要|具有|具备|拥有|热爱|反对|支持|认为|觉得|知道|明白|了解"
+
+    import re
+    for marker in ["所以", "因此", "由此可见", "故"]:
+        if marker not in text:
+            continue
+        idx = text.rindex(marker)
+        premise_area = text[:idx]
+        conclusion_area = text[idx:]
+
+        for qual in qualifiers:
+            # 模式1: "正常/大多数 X 都/会/有 ...Y" → 结论中限定词消失
+            pattern = re.compile(
+                re.escape(qual) + r"(\w{1,8})(?:" + predicate_particles + r"|" + common_verbs + r")"
+            )
+            for m in pattern.finditer(premise_area):
+                noun = m.group(1)
+                if qual not in conclusion_area:
+                    # 提取谓词（匹配到的最后一个字之后的内容）
+                    match_end = m.end()
+                    pred_snippet = text[match_end:match_end+20].split("，")[0].split("。")[0].split("的")[0]
+                    found.append({
+                        "keyword": "忽略限定",
+                        "description": (
+                            f"前提中「{qual}{noun}」带有限定词「{qual}」，"
+                            f"但结论中去掉了该限定，构成忽略限定谬误。"
+                            f"{qual}{noun}的特性不一定适用于所有{noun}。"
+                        )
+                    })
+                    break
+
+    return found

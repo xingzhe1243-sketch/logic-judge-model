@@ -34,6 +34,42 @@ def synthesize(result: dict) -> dict:
     rule_warns = []
     rule_findings = []
 
+    # 辅助函数：处理单个逻辑问题猎手的结果
+    def _process_hunter(module_key: str, label_prefix: str):
+        """处理猎手模块的结果，追加到 rule_findings 和 synthesis 警告中"""
+        nonlocal rule_findings, synthesis
+        lph = modules.get(module_key, {})
+        lph_items = lph.get("问题列表", [])
+        if lph_items:
+            seen = set()
+            for item in lph_items:
+                text_excerpt = item.get("原文引用", "")
+                ptype = item.get("问题类型", "")
+                desc = item.get("问题说明", "")
+                severity = item.get("严重程度", "中")
+                correction = item.get("修正建议", "")
+                prefix = f"[{label_prefix}]" if severity == "低" else f"[{label_prefix}!]"
+                label = f"【{ptype}】({severity})"
+                warn_msg = f"{prefix} {label} {desc}"
+                if correction:
+                    warn_msg += f" | 修正: {correction}"
+                rule_findings.append(warn_msg)
+                if severity in ("高", "中"):
+                    if warn_msg not in seen:
+                        synthesis["警告"].append(f"{prefix} {label} {desc[:100]}...")
+                        seen.add(warn_msg)
+            overall = lph.get("整体评估", {})
+            if overall.get("论证稳健性") == "低":
+                synthesis["警告"].append(f"[{label_prefix}] 整体论证稳健性评估为「低」: {overall.get('总体判断', '')}")
+        elif lph and "error" not in lph:
+            rule_findings.append(f"[{label_prefix}] 经独立审查，未发现隐蔽逻辑问题")
+
+    # 逻辑问题猎手1 — DeepSeek 独立审查
+    _process_hunter("logic_problem_hunter_1", "问题猎手1")
+
+    # 逻辑问题猎手2 — 豆包大模型独立审查（第二视角）
+    _process_hunter("logic_problem_hunter_2", "问题猎手2")
+
     fl = modules.get("formal_logic", {})
     for f in fl.get("谬误检测", []):
         rule_warns.append(f"[规则验证] 检测到谬误 {f['keyword']}: {f['description']}")

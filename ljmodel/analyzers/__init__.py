@@ -8,10 +8,24 @@ from .dialectical import analyze_dialectical
 from .source_thinking import analyze_source_thinking
 from .simple_logic import analyze_simple_logic
 from .llm_primary import build_llm_primary_prompt, analyze_llm_primary
+from .logic_problem_hunter import analyze_logic_problems
+
+# 统一谬误注册表
+from ..fallacy_registry import (
+    Fallacy, FALLACY_REGISTRY,
+    get_fallacies_by_category, get_fallacies_by_book,
+    match_keyword_fallacies, match_name_fallacies,
+    build_llm_fallacy_taxonomy_prompt, count_fallacies,
+)
 
 __all__ = [
     "analyze_formal_logic", "analyze_critical_inquiry", "analyze_biases",
     "analyze_argumentation", "analyze_elements_of_thought", "analyze_structured",
     "analyze_dialectical", "analyze_source_thinking", "analyze_simple_logic",
     "build_llm_primary_prompt", "analyze_llm_primary",
+    "analyze_logic_problems",
+    "Fallacy", "FALLACY_REGISTRY",
+    "get_fallacies_by_category", "get_fallacies_by_book",
+    "match_keyword_fallacies", "match_name_fallacies",
+    "build_llm_fallacy_taxonomy_prompt", "count_fallacies",
 ]

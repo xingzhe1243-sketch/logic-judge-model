@@ -38,6 +38,11 @@ def build_llm_primary_prompt(kb: dict) -> str:
                     else:
                         prompt += f"- {sub_key}: (含{sub_key}分析框架)\n"
 
+    # 追加完整谬误分类体系（供LLM识别参考）
+    from ..fallacy_registry import build_llm_fallacy_taxonomy_prompt
+    prompt += "\n\n## 完整谬误分类体系（供识别参考，基于9本书框架）\n"
+    prompt += build_llm_fallacy_taxonomy_prompt()
+
     prompt += """
 
 ## 输出格式要求
@@ -119,3 +124,4 @@ def analyze_llm_primary(text: str, kb: dict, client, model: str) -> dict:
         return json.loads(raw)
     except Exception as e:
         return {"error": str(e), "综合评分": {"分数": 0, "评价": "LLM分析失败"}}
+
