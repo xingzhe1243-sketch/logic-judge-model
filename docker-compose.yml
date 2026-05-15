@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  logic-judge:
+    build: .
+    container_name: logic-judge
+    ports:
+      - "8000:8000"
+    environment:
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      - ./config.yaml:/app/config.yaml
+      - ./data:/app/data
+    restart: unless-stopped

@@ -1,0 +1,75 @@
+source: 逻辑学十五讲 (陈波)
+description: 形式逻辑推理引擎——命题逻辑/词项逻辑/谓词逻辑/归纳逻辑/谬误论/悖论
+core_concepts:
+  proposition: '命题是有真假的陈述句。三种分析方法: 复合命题分析(联结词), 直言命题分析(主谓式), 量化命题分析(个体词+谓词+量词)'
+  validity: '有效性(保真性): 推理形式确保从真前提只能得到真结论。形式有效则前提真=>结论必然真'
+  soundness: '可靠性(健全性): 前提真实 + 推理形式有效 = 可靠论证'
+laws:
+- '同一律: A是A。在同一思维过程中概念/命题必须保持确定和同一'
+- '矛盾律(不矛盾律): ¬(A ∧ ¬A)。不能同时肯定A和非A'
+- '排中律: A ∨ ¬A。两个互相矛盾的判断必有一真'
+- '充足理由律: 任何真论断都必须有充足理由'
+fallacies:
+- keyword: 偷换概念/混淆概念
+  type: 歧义性谬误
+  description: 在同一论证中用不同含义的同一个词
+- keyword: 歧义句
+  type: 歧义性谬误
+  description: 句子结构歧义导致多重理解
+- keyword: 错置重音
+  type: 歧义性谬误
+  description: 重音不同导致意义不同
+- keyword: 以偏概全
+  type: 假设性谬误
+  description: 样本不足以代表整体
+- keyword: 虚假原因
+  type: 假设性谬误
+  description: 把相关关系误认为因果关系
+- keyword: 循环论证
+  type: 假设性谬误
+  description: 前提中包含待证明的结论
+- keyword: 不当类比
+  type: 假设性谬误
+  description: 类比双方在关键属性上不相似
+- keyword: 诉诸无知
+  type: 关联性谬误
+  description: 因为无法证明假所以真
+- keyword: 诉诸怜悯
+  type: 关联性谬误
+  description: 以同情代替逻辑论证
+- keyword: 诉诸群众
+  type: 关联性谬误
+  description: 以多数人的意见作为真理标准
+- keyword: 诉诸权威
+  type: 关联性谬误
+  description: 权威在非自身领域无效
+- keyword: 人身攻击
+  type: 关联性谬误
+  description: 攻击提出者而非论证本身
+- keyword: 稻草人谬误
+  type: 关联性谬误
+  description: 歪曲对方观点再攻击
+- keyword: 非黑即白
+  type: 关联性谬误
+  description: 忽略中间可能的虚假二分
+- keyword: 滑坡谬误
+  type: 关联性谬误
+  description: 假设一步必然导致极端后果
+syllogism_types:
+  直言三段论: '大前提+小前提+结论，如: 凡人皆死(大), 苏格拉底是人(小), 所以苏格拉底必死(结)'
+  假言三段论: 如果p则q, 如果q则r, 所以如果p则r
+  选言三段论: p或q, 非p, 所以q
+  二难推理: 如果p则r, 如果q则r, p或q, 所以r
+induction_methods:
+- '求同法: 不同场合中找共同因素'
+- '求异法: 相似场合中找差异因素'
+- 求同求异并用法
+- '共变法: 因素变化程度与结果变化程度相关'
+- '剩余法: 排除已知因果，剩余的可能就是原因'
+paradoxes:
+- name: 说谎者悖论
+  pattern: 这句话是假的
+  note: 自我指涉导致的语义悖论
+- name: 罗素悖论
+  pattern: 一切不是自身元素的集合
+  note: 集合论基础的悖论

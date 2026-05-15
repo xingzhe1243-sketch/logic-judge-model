@@ -1,0 +1,54 @@
+source: 思考,快与慢 (Daniel Kahneman)
+description: 双系统认知模型——系统1/系统2、前景理论、峰终定律、启动效应
+system1: '系统1: 快思考 — 自动/直觉/无意识/高负荷/难以关闭。擅长: 简单问题、模式识别、熟练动作。弱点: 易受偏见影响、过度自信'
+system2: '系统2: 慢思考 — 控制/分析/有意识/低负荷/懒惰。擅长: 复杂计算、逻辑推理、自我控制。弱点: 懒惰容易偷懒，默认接受系统1的建议'
+cognitive_ease_vs_strain:
+  cognitive_ease: '认知放松:  感觉熟悉/亲切/舒服 → 系统1主导 → 更容易相信'
+  cognitive_strain: '认知紧张:  感觉陌生/困难/不适 → 系统2激活 → 更谨慎分析'
+  trick: 'printable字体更易读 = 更容易被相信; 启动效应: 先前的刺激影响后续判断'
+biases:
+- bias: 确认偏误
+  trigger: 确认/证明/支持
+  description: 只注意支持自己观点的证据
+- bias: 可得性启发
+  trigger: 记得/想起/听说
+  description: 根据容易想到的程度判断概率
+- bias: 代表性启发
+  trigger: 典型/代表/像
+  description: 根据相似性判断类别归属
+- bias: 锚定效应
+  trigger: 参照/基准/起点
+  description: 初始值影响后续判断
+- bias: 事后聪明偏差
+  trigger: 早就知道/预料之中
+  description: 事后觉得事情必然发生
+- bias: 过度自信
+  trigger: 肯定/绝对/毫无疑问
+  description: 高估自己的判断准确性
+- bias: 损失厌恶
+  trigger: 损失/风险/避免
+  description: 损失比收益更敏感(约2倍)
+- bias: 框架效应
+  trigger: 存活率/死亡率/概率
+  description: 表述方式影响决策偏好
+- bias: 沉没成本
+  trigger: 已经投入/白费
+  description: 不应考虑无法收回的成本
+- bias: 现状偏好
+  trigger: 保持/维持/不变
+  description: 倾向于维持当前状态
+- bias: 基本归因错误
+  trigger: 性格/人品/素质
+  description: 夸大内在特质轻视外部情境
+- bias: 乐观/悲观偏差
+  trigger: 前途/光明/悲观
+  description: 对未来不切实际的乐观或悲观
+prospect_theory:
+  reference_point: '参照点依赖: 收益/亏损是相对于参照点而非绝对值'
+  loss_aversion: '损失厌恶: 失去100元的痛苦远大于得到100元的快乐'
+  diminishing_sensitivity: '敏感度递减: 100→200的变化比1100→1200更显著'
+peak_end_rule: '峰终定律: 我们对一段体验的评价主要基于最高点和结束点的感受'
+wysiati: 'WYSIATI: What You See Is All There Is — 我们基于已知信息做判断，但容易忽略未知信息'
+experience_vs_memory:
+  experiencing_self: '体验自我: 感受当下每一刻的体验'
+  remembering_self: '记忆自我: 存储和回忆故事，决定下次是否再做'

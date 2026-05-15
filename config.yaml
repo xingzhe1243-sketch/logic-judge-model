@@ -1,0 +1,25 @@
+# 终极逻辑判断模型 · 九维思维矩阵 — 配置文件
+# 优先级: CLI参数 > 此文件 > .env > 默认值
+
+api_key: ""              # DeepSeek API密钥（推荐用 DEEPSEEK_API_KEY 环境变量）
+model: deepseek-reasoner # 模型名称
+base_url: https://api.deepseek.com/v1
+log_level: WARNING        # DEBUG / INFO / WARNING / ERROR
+llm_provider: deepseek    # deepseek / openai
+
+# 默认启用的分析模块
+modules:
+  - formal_logic
+  - critical_inquiry
+  - bias_detection
+  - argumentation
+  - elements_of_thought
+  - structured_analysis
+  - dialectical
+  - source_thinking
+  - simple_logic
+  - llm_primary
+
+server:
+  host: 0.0.0.0
+  port: 8000

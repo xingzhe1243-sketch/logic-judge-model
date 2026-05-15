@@ -1,0 +1,58 @@
+source: 麦肯锡教我的逻辑思维
+description: 结构化思维——MECE/金字塔原理/逻辑树/四象限/7S模型
+logical_thinking_foundations:
+- 'MECE原则: 相互独立(Mutually Exclusive)，完全穷尽(Collectively Exhaustive)'
+- '金字塔原则: 结论先行+上层概括下层+纵向支撑横向并列'
+- '逻辑树: 将问题层层分解，确保不遗漏'
+- '横向推理: 各层论点之间要构成归纳/演绎关系'
+- '纵向推理: 上层是结论，下层是理由'
+pyramid_principle:
+  top_down: '自上而下: 中心论点→分论点→论据/事实'
+  bottom_up: '自下而上: 事实→概括→结论'
+  advantages:
+  - 结论先行减少理解成本
+  - 结构清晰有说服力
+  tips:
+  - 同一层级的论点要相互独立不重叠
+  - 下层对上层要有支撑关系
+  - '纵向: 问''为什么''深入, 横向: 问''然后呢''展开'
+logic_tree_types:
+  诊断树: 以'为什么'展开原因分析
+  决策树: 以'怎么办'展开方案评估
+  why_why: 连续追问为什么找到根本原因(类似5Whys)
+priority_matrix:
+  axes: '横轴: 重要性(高→低); 纵轴: 紧急性(高→低)'
+  quadrants:
+  - '重要且紧急: 立即处理'
+  - '重要不紧急: 计划做'
+  - '紧急不重要: 委托他人'
+  - '不重要不紧急: 不做'
+problem_solving:
+- '界定问题: 明确问题范围和目标'
+- '分解问题: 用MECE+逻辑树分解'
+- '设定假设: 先假设再验证'
+- '收集数据: 有针对性地收集验证所需数据'
+- '验证假设: 用数据和分析验证'
+- '导出结论: 基于验证形成结论'
+- '方案设计: 基于结论设计解决方案'
+- '落地执行: 确保方案可操作'
+logical_thinking_skills:
+- '因果关系: A导致了B，区分相关和因果'
+- '演绎法: 从一般到特殊的推理'
+- '归纳法: 从特殊到一般的概括'
+- '比较分析: 通过比较找出异同'
+- '矩阵分析: 用二维坐标分类分析'
+context_analysis:
+  3C: 公司(Corporation)/顾客(Customer)/竞争者(Competitor)
+  SWOT: 优势/劣势/机会/威胁
+systematic_thinking_7s:
+  hard_elements:
+  - 战略(Strategy)
+  - 结构(Structure)
+  - 制度/系统(System)
+  soft_elements:
+  - 共同价值观(Shared Value)
+  - 风格(Style)
+  - 人员(Staff)
+  - 技能(Skill)
+  principle: 7个S相互关联，改变一个影响全部
