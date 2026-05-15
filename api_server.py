@@ -13,13 +13,22 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
+print(f"[DEBUG] __file__ = {__file__}")
+print(f"[DEBUG] STATIC_DIR = {STATIC_DIR}")
+print(f"[DEBUG] STATIC_DIR exists = {STATIC_DIR.is_dir()}")
+if STATIC_DIR.is_dir():
+    print(f"[DEBUG] files: {[p.name for p in STATIC_DIR.iterdir()]}")
 
 try:
     _INDEX_HTML = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    print("[DEBUG] Loaded index.html from STATIC_DIR")
 except (OSError, FileNotFoundError):
+    print("[DEBUG] Fallback: trying CWD static/")
     try:
         _INDEX_HTML = (Path("static/index.html")).read_text(encoding="utf-8")
-    except (OSError, FileNotFoundError):
+        print("[DEBUG] Loaded index.html from CWD static/")
+    except (OSError, FileNotFoundError) as e2:
+        print(f"[DEBUG] Fallback also failed: {e2}")
         _INDEX_HTML = "<html><body><h1>规则解剖引擎</h1><p>API 运行中</p></body></html>"
 
 from ljmodel import LogicJudgeModel
