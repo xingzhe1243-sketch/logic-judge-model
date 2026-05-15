@@ -4,10 +4,15 @@ import asyncio
 import os
 from typing import Optional
 
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+
+STATIC_DIR = Path(__file__).parent / "static"
 
 from ljmodel import LogicJudgeModel
 from ljmodel.model import ALL_MODULES
@@ -58,6 +63,14 @@ def get_judge() -> LogicJudgeModel:
     return _judge
 
 # --- Endpoints ---
+
+@app.get("/", response_class=HTMLResponse)
+async def root():
+    """Serve Web UI"""
+    index = STATIC_DIR / "index.html"
+    if index.is_file():
+        return HTMLResponse(index.read_text(encoding="utf-8"))
+    return HTMLResponse("<h1>规则解剖引擎</h1><p>API 可用，静态页面未找到。</p>")
 
 @app.get("/health", response_model=HealthResponse)
 async def health():
@@ -172,9 +185,8 @@ async def books_reload():
 def run_server(host: str = "0.0.0.0", port: int = 8000, reload: bool = False):
     """启动API服务器"""
     import uvicorn
-    static_dir = os.path.join(os.path.dirname(__file__), "static")
-    if os.path.isdir(static_dir):
-        app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
+    if STATIC_DIR.is_dir():
+        app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
     print(f"  终极逻辑判断模型 API 启动于 http://{host}:{port}")
     print(f"   API文档: http://localhost:{port}/docs")
     if reload:
