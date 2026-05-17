@@ -463,6 +463,52 @@ httpx >= 0.24.0         # 异步 HTTP
 
 ---
 
+## 扩展指南 / Extension Guide
+
+### 添加新书籍
+
+在 `books/` 目录创建 YAML 文件，系统自动热加载：
+
+```yaml
+# books/my_new_book.yaml
+source: "书名 / Book Title"
+description: "一句话描述 / One-line description"
+core_concepts:
+  - name: "概念1"
+    definition: "定义..."
+  - name: "概念2"
+    definition: "定义..."
+```
+
+Web API 调用 `POST /books/reload` 即可生效，无需重启。
+
+### 添加新分析模块
+
+在 `ljmodel/analyzers/` 创建 Python 文件，实现分析函数：
+
+```python
+# ljmodel/analyzers/my_analyzer.py
+def analyze_my_module(text: str, kb: dict) -> dict:
+    """对新文本执行自定义分析"""
+    return {
+        "关键发现": [...],
+        "评分": 85,
+    }
+```
+
+然后在 `ljmodel/analyzers/__init__.py` 注册，在 `ljmodel/model.py` 的 `ALL_MODULES` 中添加条目。
+
+### 添加新 LLM Provider
+
+```python
+# ljmodel/providers/my_provider.py
+# 1. 继承 OpenAIClient 兼容接口
+# 2. 在 config.py 添加环境变量
+# 3. 在 model.py 的 PROVIDERS 字典注册
+```
+
+---
+
 ## 许可证 / License
 
 本项目仅用于学习和研究目的。
