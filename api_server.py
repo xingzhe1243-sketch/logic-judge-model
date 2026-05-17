@@ -78,15 +78,16 @@ textarea:focus{border-color:#3498db}
 .footer{text-align:center;padding:24px 0;color:#2f3d4a;font-size:0.76em}
 .history-panel{display:none;margin:12px 0;max-height:400px;overflow-y:auto}
 .history-panel.open{display:block}
-.history-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;cursor:pointer;transition:background 0.1s}
+.history-item{display:flex;flex-direction:column;padding:10px 12px;border-radius:6px;cursor:pointer;transition:background 0.1s;border-bottom:1px solid rgba(47,61,74,0.3)}
 .history-item:hover{background:#1f2a36}
-.h-type{min-width:52px;text-align:center;font-size:0.72em;padding:2px 6px;border-radius:4px;font-weight:600}
+.history-item .h-row{display:flex;align-items:center;gap:8px}
+.h-type{min-width:48px;text-align:center;font-size:0.72em;padding:2px 6px;border-radius:4px;font-weight:600}
 .h-type.analyze{background:rgba(52,152,219,0.15);color:#3498db}
 .h-type.dissect{background:rgba(155,89,182,0.15);color:#9b59b6}
 .h-type.debate{background:rgba(241,196,15,0.15);color:#f1c40f}
-.h-text{flex:1;font-size:0.81em;color:#a0aec0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.h-time{font-size:0.73em;color:#657786;min-width:110px;text-align:right}
-.h-score{min-width:42px;text-align:center;font-weight:700;font-size:0.83em}
+.h-text{font-size:0.85em;color:#c8d6e5;margin-top:6px;line-height:1.45;word-break:break-word;max-height:3em;overflow:hidden}
+.h-time{font-size:0.72em;color:#657786;min-width:105px;text-align:right}
+.h-score{min-width:38px;text-align:center;font-weight:700;font-size:0.83em}
 .meta-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:4px 0}
 .tag{font-size:0.74em;padding:2px 8px;border-radius:10px;background:rgba(52,152,219,0.12);color:#3498db}
 @media(max-width:600px){.container{padding:12px}.tab-btn{padding:8px 14px;font-size:0.82em}}
@@ -448,7 +449,8 @@ async function fetchHistory() {
       const typeLabel = {'analyze':'评分','dissect':'解剖','debate':'辩论'}[r.analysis_type]||'评分';
       const typeCls = r.analysis_type||'analyze';
       const scoreHtml = r.score ? '<span class="h-score" style="color:'+(r.score>=70?'#27ae60':r.score>=40?'#f39c12':'#e74c3c')+'">'+r.score+'</span>' : '';
-      return '<div class="history-item" data-id="'+r.id+'"><span class="h-type '+typeCls+'">'+typeLabel+'</span>'+scoreHtml+'<span class="h-text">'+esc(r.text)+'</span><span class="h-time">'+esc(r.created_at||'')+'</span><button class="btn-sm btn-secondary view-btn" data-id="'+r.id+'">查看</button><button class="btn-sm btn-danger del-btn" data-id="'+r.id+'">删</button></div>';
+      var txt = r.text||''; if(txt.length>120) txt=txt.substring(0,120)+'...';
+      return '<div class="history-item" data-id="'+r.id+'"><div class="h-row"><span class="h-type '+typeCls+'">'+typeLabel+'</span>'+scoreHtml+'<span class="h-time">'+esc(r.created_at||'')+'</span><span style="flex:1"></span><button class="btn-sm btn-secondary view-btn" data-id="'+r.id+'">查看</button><button class="btn-sm btn-danger del-btn" data-id="'+r.id+'">删</button></div><div class="h-text">'+esc(txt)+'</div></div>';
     }).join('');
     list.querySelectorAll('.view-btn').forEach(btn => btn.addEventListener('click', async e => {
       e.stopPropagation();
