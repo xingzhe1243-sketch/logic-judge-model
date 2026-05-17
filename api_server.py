@@ -291,21 +291,32 @@ function renderAnalyzeResult(data) {
 }
 
 // ===================== Tab 2: 规则解剖 =====================
+function startTimer(statusEl, prefix) {
+  const start = Date.now();
+  const timer = setInterval(function() {
+    const elapsed = Math.floor((Date.now()-start)/1000);
+    statusEl.textContent = prefix + ' (' + elapsed + 's)';
+  }, 1000);
+  return timer;
+}
 document.getElementById('dissectBtn').addEventListener('click', async () => {
   const text = document.getElementById('dissectInput').value.trim();
   if(!text) return;
   const mode = document.querySelector('input[name="dissectMode"]:checked').value;
   const btn = document.getElementById('dissectBtn');
   const status = document.getElementById('dissectStatus');
-  btn.disabled = true; status.textContent = '解剖分析中...';
-  document.getElementById('results').innerHTML = '';
+  btn.disabled = true;
+  document.getElementById('results').innerHTML = '<div style="text-align:center;padding:30px;color:#657786">分析中...</div>';
+  const timer = startTimer(status, '解剖分析中');
   try {
     const res = await fetch('/dissect', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text, mode})});
+    clearInterval(timer);
     if(!res.ok) throw new Error('HTTP '+res.status);
     const data = await res.json();
     renderDissectResult(data);
     status.textContent = '解剖完成';
   } catch(e) {
+    clearInterval(timer);
     document.getElementById('results').innerHTML = '<div class="error">请求失败: '+esc(e.message)+'</div>';
     status.textContent = '失败';
   }
@@ -318,26 +329,33 @@ document.getElementById('dissectDeepBtn').addEventListener('click', async () => 
   const mode = document.querySelector('input[name="dissectMode"]:checked').value;
   const btn = document.getElementById('dissectDeepBtn');
   const status = document.getElementById('dissectStatus');
-  btn.disabled = true; status.textContent = '阶段1: 解剖分析...';
-  document.getElementById('results').innerHTML = '';
+  btn.disabled = true;
+  document.getElementById('results').innerHTML = '<div style="text-align:center;padding:30px;color:#657786">阶段1: 解剖分析...</div>';
+  const timer = startTimer(status, '阶段1: 解剖分析');
+  let timer2 = null;
   try {
     const res1 = await fetch('/dissect', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text, mode})});
     if(!res1.ok) throw new Error('HTTP '+res1.status);
     const d = await res1.json();
-    status.textContent = '阶段2: 深度辩论...';
+    clearInterval(timer);
+    document.getElementById('results').innerHTML = '<div style="text-align:center;padding:30px;color:#657786">阶段2: 深度辩论 — 5位专家 x 3轮辩论（约60秒）<br><small style="color:#657786">各模型独立分析 + 交叉辩论 + 综合裁决</small></div>';
+    timer2 = startTimer(status, '阶段2: 5专家辩论');
     const res2 = await fetch('/debate', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text, dissection_result: d})});
+    clearInterval(timer2);
     if(!res2.ok) throw new Error('HTTP '+res2.status);
     const debate = await res2.json();
     renderDeepResult(d, debate);
     status.textContent = '全流程完成';
   } catch(e) {
+    clearInterval(timer);
+    if(timer2) clearInterval(timer2);
     document.getElementById('results').innerHTML = '<div class="error">请求失败: '+esc(e.message)+'</div>';
     status.textContent = '失败';
   }
   btn.disabled = false;
 });
 
-function renderDissectResult(data) {
+function renderDissectResult(data) {function renderDissectResult(data) {
   let html = '';
   const mj = data['模式判定']||{};
   if(Object.keys(mj).length) {
@@ -433,23 +451,31 @@ function renderDebateResult(data) {
 
 // ===================== Deep result (dissect + debate) =====================
 function renderDeepResult(dissectData, debateData) {
-  let html = '<div class="section"><div class="section-title" style="font-size:1em;color:#9b59b6">🔪 阶段1: 规则解剖</div></div>';
-  document.getElementById('results').innerHTML = html;
+  // Render dissect into a temp container
+  const tmp = document.createElement('div');
+  const origResults = document.getElementById('results');
+  const origInnerHTML = origResults.innerHTML;
+  // Temporarily hijack results to capture dissect output
+  document.getElementById('results').innerHTML = '';
+  const savedBlock = window._historyQuestionBlock;
+  window._historyQuestionBlock = null; // Don't show question block twice
   renderDissectResult(dissectData);
-  html = document.getElementById('results').innerHTML;
+  const dissectHtml = document.getElementById('results').innerHTML;
+  window._historyQuestionBlock = savedBlock;
+  // Now build the combined output
+  let html = (savedBlock||'');
+  html += '<div class="section"><div class="section-title" style="font-size:1em;color:#9b59b6">🔪 阶段1: 规则解剖</div></div>';
+  html += dissectHtml;
   html += '<div class="section" style="margin-top:24px"><div class="section-title" style="font-size:1em;color:#f39c12">⚔️ 阶段2: 深度辩论</div></div>';
   document.getElementById('results').innerHTML = html;
-  const debateEl = document.createElement('div');
-  const oldResults = document.getElementById('results');
-  // Render debate into a temp area then append
-  const savedBlock = window._historyQuestionBlock;
+  // Save current html, render debate to temp, then combine
+  const afterDissectHtml = document.getElementById('results').innerHTML;
+  document.getElementById('results').innerHTML = '';
+  window._historyQuestionBlock = null;
   renderDebateResult(debateData);
-  window._historyQuestionBlock = savedBlock;
-  if(savedBlock) {
-    const finalHtml = document.getElementById('results').innerHTML;
-    document.getElementById('results').innerHTML = savedBlock + finalHtml;
-    window._historyQuestionBlock = null;
-  }
+  const debateHtml = document.getElementById('results').innerHTML;
+  document.getElementById('results').innerHTML = afterDissectHtml + debateHtml;
+  window._historyQuestionBlock = null;
 }
 
 // ===================== History =====================
