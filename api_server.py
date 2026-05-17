@@ -633,7 +633,7 @@ async def analyze(req: AnalyzeRequest):
             score = int(score_str.split("/")[0])
         except Exception:
             score = 0
-        save_analysis(req.text, score, req.modules or list(ALL_MODULES.keys()), result)
+        save_analysis(req.text, score, req.modules or list(ALL_MODULES.keys()), result, "analyze")
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -25,18 +25,19 @@ def init_db():
                 score       INTEGER DEFAULT 0,
                 modules     TEXT    DEFAULT '',
                 result      TEXT    DEFAULT '{}',
+                analysis_type TEXT  DEFAULT 'analyze',
                 created_at  TEXT    DEFAULT (datetime('now','localtime'))
             )
         """)
 
 
-def save_analysis(text: str, score: int, modules: list[str], result: dict) -> int:
+def save_analysis(text: str, score: int, modules: list[str], result: dict, analysis_type: str = "analyze") -> int:
     """保存一条分析记录，返回 id"""
     with _get_conn() as conn:
         cur = conn.execute(
-            "INSERT INTO analyses (text, score, modules, result) VALUES (?, ?, ?, ?)",
+            "INSERT INTO analyses (text, score, modules, result, analysis_type) VALUES (?, ?, ?, ?, ?)",
             (text, score, json.dumps(modules, ensure_ascii=False),
-             json.dumps(result, ensure_ascii=False))
+             json.dumps(result, ensure_ascii=False), analysis_type)
         )
         return cur.lastrowid
 
@@ -45,7 +46,7 @@ def list_analyses(limit: int = 20, offset: int = 0) -> list[dict]:
     """列出最近的分析记录"""
     with _get_conn() as conn:
         rows = conn.execute(
-            "SELECT id, text, score, modules, created_at FROM analyses ORDER BY id DESC LIMIT ? OFFSET ?",
+            "SELECT id, text, score, modules, created_at, analysis_type FROM analyses ORDER BY id DESC LIMIT ? OFFSET ?",
             (limit, offset)
         ).fetchall()
         return [dict(r) for r in rows]
@@ -69,7 +70,7 @@ def search_analyses(q: str, limit: int = 20) -> list[dict]:
     """按关键词搜索分析文本"""
     with _get_conn() as conn:
         rows = conn.execute(
-            "SELECT id, text, score, modules, created_at FROM analyses WHERE text LIKE ? ORDER BY id DESC LIMIT ?",
+            "SELECT id, text, score, modules, created_at, analysis_type FROM analyses WHERE text LIKE ? ORDER BY id DESC LIMIT ?",
             (f"%{q}%", limit)
         ).fetchall()
         return [dict(r) for r in rows]

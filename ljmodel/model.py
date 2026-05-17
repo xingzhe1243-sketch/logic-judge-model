@@ -263,7 +263,7 @@ class LogicJudgeModel:
                 m = re.search(r"(\d+)/100", score_str)
                 if m:
                     score = int(m.group(1))
-                save_analysis(text, score, modules or list(ALL_MODULES.keys()), result)
+                save_analysis(text, score, modules or list(ALL_MODULES.keys()), result, "analyze")
             except Exception as e:
                 logger.warning(f"数据库保存失败: {e}")
 
