@@ -6,7 +6,4 @@ __pycache__/
 *.db
 cookies.json
 *_test_auth.py
-data/crawler_*.log
-data/crawler_*.json
-data/zhihu_*.json
-data/zhihu_*.txt
+data/
