@@ -355,7 +355,7 @@ document.getElementById('dissectDeepBtn').addEventListener('click', async () => 
   btn.disabled = false;
 });
 
-function renderDissectResult(data) {function renderDissectResult(data) {
+function renderDissectResult(data) {
   let html = '';
   const mj = data['模式判定']||{};
   if(Object.keys(mj).length) {
