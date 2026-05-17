@@ -129,6 +129,16 @@ def _build_parser() -> argparse.ArgumentParser:
     # 模块选择
     parser.add_argument("--modules", "-m", type=str,
                         help="指定分析模块，逗号分隔（默认全部）")
+    # 解剖模式
+    parser.add_argument("--dissect", action="store_true",
+                        help="规则解剖模式 — 基于所有知识库进行决策分析（非逻辑评分）")
+    parser.add_argument("--deep", action="store_true",
+                        help="与 --dissect 配合使用，在解剖分析后自动启动多模型智囊团深度辩论")
+    parser.add_argument("--debate", action="store_true",
+                        help="多模型智囊团深度辩论模式 — 先运行解剖分析，再由5位专家基于全部知识库深度辩论")
+    parser.add_argument("--mode", type=str, default="auto",
+                        choices=["auto", "a", "b"],
+                        help="解剖模式: auto(自动检测) / a(博弈分析) / b(方向导航)")
     # 配置
     parser.add_argument("--config", "-c", type=str,
                         help="配置文件路径 (YAML)")
@@ -250,6 +260,40 @@ def main():
 
     # 单文本分析
     if text:
+        # 深度辩论模式（独立运行）
+        if args.debate:
+            judge = LogicJudgeModel()
+            if not judge.client:
+                print("警告: 未设置 API Key，辩论需要 LLM 支持")
+            result = judge.debate(text, verbose=not args.json)
+            if args.json:
+                print(json.dumps(result, ensure_ascii=True, indent=2))
+            return
+
+        # 解剖模式 — 独立决策分析
+        if args.dissect:
+            judge = LogicJudgeModel()
+            result = judge.dissect(text, mode=args.mode, verbose=not args.json)
+
+            # --deep: 在解剖分析后启动深度辩论
+            if args.deep:
+                print("\n  >>> 启动多模型智囊团深度辩论...")
+                if mode == "b":
+                    debate_result = judge.debate(text, verbose=not args.json,
+                                                  resonance_result=result)
+                else:
+                    debate_result = judge.debate(text, verbose=not args.json,
+                                                  dissection_result=result)
+                if args.json:
+                    print(json.dumps({"解剖分析": result, "深度辩论": debate_result},
+                                     ensure_ascii=True, indent=2))
+                return
+
+            if args.json:
+                print(json.dumps(result, ensure_ascii=True, indent=2))
+            return
+
+        # 标准逻辑评分模式
         html_path = "logic_judge_report.html" if args.html else None
         judge = LogicJudgeModel()
         result = judge.analyze(text, verbose=not args.json,

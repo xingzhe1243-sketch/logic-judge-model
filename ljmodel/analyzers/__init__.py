@@ -9,6 +9,7 @@ from .source_thinking import analyze_source_thinking
 from .simple_logic import analyze_simple_logic
 from .llm_primary import build_llm_primary_prompt, analyze_llm_primary
 from .logic_problem_hunter import analyze_logic_problems
+from .zhihu_expert import analyze_zhihu_expert
 
 # 统一谬误注册表
 from ..fallacy_registry import (
@@ -24,6 +25,7 @@ __all__ = [
     "analyze_dialectical", "analyze_source_thinking", "analyze_simple_logic",
     "build_llm_primary_prompt", "analyze_llm_primary",
     "analyze_logic_problems",
+    "analyze_zhihu_expert",
     "Fallacy", "FALLACY_REGISTRY",
     "get_fallacies_by_category", "get_fallacies_by_book",
     "match_keyword_fallacies", "match_name_fallacies",

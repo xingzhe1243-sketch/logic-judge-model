@@ -182,6 +182,19 @@ def generate_html_report(result: dict, output_path: str = None) -> str:
                     html += f'<div class="item"><strong>{_escape_html(str(k))}</strong>: {_escape_html(str(v)[:200])}</div>'
         html += "</div></div>"
 
+    # 知乎智囊团 · 真实世界经验视角
+    ze = modules.get("zhihu_expert", {})
+    if ze and ze.get("洞见"):
+        html += f"""  <div class="card"><div class="card-header"><h2>知乎智囊团 · 真实世界经验视角 <span style="font-weight:400;color:var(--muted);font-size:0.85em">— 知乎集体智慧</span></h2><span class="arrow">▼</span></div><div class="card-body">
+          <div class="item" style="color:var(--muted);font-size:0.9em;">{_escape_html(ze['状态'])}</div>"""
+        for ins in ze["洞见"][:8]:
+            html += f'<div class="finding-item">{_escape_html(ins[:200])}</div>'
+        if ze.get("领域分布"):
+            domains = ", ".join(d["domain"] for d in ze["领域分布"])
+            html += f'<div class="item" style="margin-top:8px;color:var(--muted);">相关知识领域: {_escape_html(domains)}</div>'
+        html += '<div class="item" style="margin-top:8px;font-size:0.85em;color:var(--muted);">数据来源: ' + _escape_html(ze.get("知识来源", "知乎")) + '</div>'
+        html += "</div></div>"
+
     # LLM综合分析
     llm = modules.get("llm_primary", {})
     if llm and "error" not in llm:

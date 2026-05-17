@@ -106,6 +106,18 @@ def synthesize(result: dict) -> dict:
         if "建议" in item:
             rule_findings.append(f"[规则验证] {item}")
 
+    # 知乎专家 — 真实世界经验视角
+    ze = modules.get("zhihu_expert", {})
+    if ze.get("洞见"):
+        rule_findings.append(f"[知乎专家] {ze['状态']}")
+        # 加入最有价值的洞见
+        for ins in ze["洞见"][:4]:
+            rule_findings.append(f"[知乎洞见] {ins[:200]}")
+        # 加入领域分布信息
+        if ze.get("领域分布"):
+            domains = [d["domain"] for d in ze["领域分布"]]
+            rule_findings.append(f"[知乎领域] 相关内容涉及: {'、'.join(domains)}")
+
     # 合并：LLM主分析 + 规则验证
     seen_warns = set()
     for w in llm_warns:

@@ -18,7 +18,7 @@ from .analyzers import (
     analyze_argumentation, analyze_elements_of_thought, analyze_structured,
     analyze_dialectical, analyze_source_thinking, analyze_simple_logic,
     analyze_llm_primary, build_llm_primary_prompt,
-    analyze_logic_problems,
+    analyze_logic_problems, analyze_zhihu_expert,
 )
 
 ALL_MODULES = {
@@ -31,12 +31,15 @@ ALL_MODULES = {
     "dialectical": analyze_dialectical,
     "source_thinking": analyze_source_thinking,
     "simple_logic": analyze_simple_logic,
+    "zhihu_expert": analyze_zhihu_expert,
     "llm_primary": None,  # special-cased
 }
 from .synthesis import synthesize
+from .coordinator import coordinate
 from .report import print_report
 from .report_html import generate_html_report
 from .database import save_analysis
+from .debate_engine import DebateEngine, print_debate_report
 
 
 class LogicJudgeModel:
@@ -133,6 +136,7 @@ class LogicJudgeModel:
 7. 《麦肯锡教我的逻辑思维》— MECE、金字塔原理、逻辑树、四象限
 8. 《世界的逻辑》(Harvey) — 辩证系统分析、资本循环、剥夺性积累、空间修复、不平衡发展
 9. 《源思维》(何艳玲) — 还原事实->辨析因果->锚定切口；多元因果思维；关键X
+10. 《知乎集体智慧》— 从知乎高赞回答中提炼的真实世界经验（社会与权力/经济与职场/认知与心理/人际关系/策略与决策五大领域）
 
 回答要求：
 - 严格遵循逻辑推理，区分演绎有效性和归纳强度
@@ -247,6 +251,9 @@ class LogicJudgeModel:
         # 阶段3: 综合合成
         result["synthesis"] = synthesize(result)
 
+        # 阶段4: 智囊团协调 — 跨专家综合分析
+        result["coordination"] = coordinate(result["modules"], result.get("input", ""))
+
         # 持久化到 SQLite
         if save_db:
             try:
@@ -268,5 +275,218 @@ class LogicJudgeModel:
         if html_path:
             generate_html_report(result, html_path)
             logger.info(f"HTML报告已保存至 {os.path.abspath(html_path)}")
+
+        return result
+
+    # ========== 规则解剖模型 — 独立决策分析引擎 ==========
+
+    def dissect(self, text: str, mode: str = "auto", verbose: bool = True) -> dict:
+        """规则解剖模型 — 独立决策分析引擎
+
+        结合所有知识库（9本逻辑经典 + 知乎集体智慧），
+        对用户的决策/问题进行全面剖析。不评分，只剖析。
+
+        Args:
+            text: 用户问题/决策场景
+            mode: 'auto'（自动检测）, 'a'（解剖引擎-博弈分析）, 'b'（共鸣拓扑-方向导航）
+            verbose: 是否打印分析报告
+
+        Returns:
+            dict: 完整的决策分析结果
+        """
+        from .dissection_engine import DissectionEngine
+        from .resonance_engine import ResonanceEngine
+
+        # 模式检测
+        a_signals = ["该不该", "怎么谈", "如何选择", "值不值得", "利益", "风险",
+                      "跳槽", "薪资", "谈判", "决策", "权衡", "划算", "博弈"]
+        b_signals = ["迷茫", "不知道", "没感觉", "累了", "焦虑",
+                      "没意义", "赢了也不开心", "困惑", "找不到方向"]
+
+        if mode == "auto":
+            a_score = sum(1 for s in a_signals if s in text)
+            b_score = sum(1 for s in b_signals if s in text)
+            if a_score >= b_score and a_score > 0:
+                mode = "a"
+            elif b_score > 0:
+                mode = "b"
+            else:
+                mode = "a"  # default
+
+        if verbose:
+            print(f"\n{'='*60}")
+            print(f"  规则解剖模型 V4.0 — {'博弈分析（模式A）' if mode == 'a' else '方向导航（模式B）'}")
+            print(f"{'='*60}")
+            print(f"  分析对象: {text[:100]}{'...' if len(text) > 100 else ''}")
+            print(f"{'='*60}\n")
+
+        if mode == "b":
+            engine = ResonanceEngine(self.kb)
+            result = engine.analyze(text)
+            if verbose:
+                self._print_dissection_report(result, mode="b")
+            return result
+
+        # 模式A: 解剖引擎 — 完整决策分析
+        engine = DissectionEngine(self.kb)
+        result = engine.analyze(text)
+
+        # 整合知乎知识库洞察（如果数据存在）
+        zhihu_insights = self._get_zhihu_insights(text)
+        if zhihu_insights:
+            result["知乎参考"] = zhihu_insights
+
+        if verbose:
+            self._print_dissection_report(result, mode="a")
+
+        return result
+
+    def _get_zhihu_insights(self, text: str) -> dict:
+        """从知乎知识库获取相关洞察"""
+        try:
+            from .analyzers.zhihu_expert import _get_db, _extract_keywords, _search_answers, _search_questions
+            conn = _get_db()
+            if not conn:
+                return {}
+            keywords = _extract_keywords(text, max_keywords=5)
+            qs = _search_questions(conn, keywords, max_results=3)
+            ans = _search_answers(conn, keywords, min_votes=500, max_answers=5)
+            conn.close()
+            return {
+                "关键词": keywords,
+                "相关问题": [q["title"] for q in qs],
+                "高赞参考": [{"作者": a["author"], "问题": a["question_title"][:60],
+                              "赞同": a["voteup_count"]} for a in ans],
+            }
+        except Exception:
+            return {}
+
+    def _print_dissection_report(self, result: dict, mode: str = "a"):
+        """打印解剖分析报告"""
+        if mode == "b":
+            pain = result.get("痛苦分类", {})
+            print(f"  [痛苦分类] 类型: {pain.get('类型', '未分类')}")
+            print(f"  [状态] {pain.get('状态', '')}")
+            print(f"  [建议] {pain.get('建议操作', '')}")
+            print()
+            for s in result.get("感知扫描", []):
+                print(f"  ? {s}")
+            for f in result.get("场域检查", []):
+                print(f"  ? {f}")
+            ladder = result.get("梯子检查", {})
+            if isinstance(ladder, dict):
+                for k, v in ladder.items():
+                    if isinstance(v, list):
+                        for item in v:
+                            print(f"  [{k}] {item}")
+                    else:
+                        print(f"  [{k}] {v}")
+            print(f"\n{'='*60}")
+            return
+
+        # 模式A: 完整解剖报告
+        mode_judge = result.get("模式判定", {})
+        print(f"  [模式判定] {mode_judge.get('依据', '')} (置信度: {mode_judge.get('置信度', '')})")
+
+        # 博弈地图
+        print(f"\n  ┌─ 博弈地图 ──────────────────────────────")
+        gm = result.get("博弈地图", {})
+        if gm:
+            for key, val in gm.items():
+                if key.startswith("_"):
+                    continue
+                if isinstance(val, list) and val:
+                    print(f"  │ {key}:")
+                    for v in val:
+                        print(f"  │   • {v}")
+                elif isinstance(val, str):
+                    print(f"  │ {key}: {val}")
+
+        # 风险计算
+        print(f"\n  ┌─ 风险扫描 ──────────────────────────────")
+        risks = result.get("风险计算", {})
+        if risks:
+            for k, v in risks.items():
+                if not k.startswith("_"):
+                    print(f"  │ {k}: {v}")
+
+        # 公理冲突
+        print(f"\n  ┌─ 公理冲突检查 ──────────────────────────")
+        conflicts = result.get("公理冲突检查", {})
+        if conflicts:
+            print(f"  │ 活跃公理: {'、'.join(conflicts.get('活跃公理列表', []))}")
+            for c in conflicts.get("冲突列表", []):
+                if isinstance(c, dict):
+                    cv = c.get("裁决", "")
+                    ca = c.get("公理A", "")
+                    cb = c.get("公理B", "")
+                    print(f"  │ [!] {ca} vs {cb} → {cv}")
+
+        # 行动指令
+        print(f"\n  ┌─ 行动指令 ──────────────────────────────")
+        for a in result.get("行动指令", []):
+            print(f"  │ • {a}")
+
+        # 预测
+        preds = result.get("预测", [])
+        if preds and not any("暂无足够信息" in str(p.get("text", "")) for p in preds):
+            print(f"\n  ┌─ 预测（将被记录并验证）───────────────")
+            for p in preds:
+                conf = p.get("置信度", "?")
+                text = p.get("text", "")[:200]
+                print(f"  │ [置信度: {conf}] {text}")
+
+        # 知乎参考
+        zhihu = result.get("知乎参考", {})
+        if zhihu and zhihu.get("高赞参考"):
+            print(f"\n  ┌─ 知乎集体智慧参考 ────────────────────")
+            for a in zhihu["高赞参考"][:3]:
+                print(f"  │ • [{a['赞同']}赞] {a['作者']} — {a.get('问题', '')}")
+        elif zhihu:
+            print(f"\n  ┌─ 知乎集体智慧参考 ────────────────────")
+            print(f"  │ （知识库中暂未找到相关问题）")
+
+    # ========== 多模型智囊团深度辩论 ==========
+
+    def debate(self, text: str, verbose: bool = True,
+               dissection_result: dict = None,
+               resonance_result: dict = None) -> dict:
+        """多模型智囊团深度辩论
+
+        基于解剖分析（模式A）和/或共鸣拓扑（模式B）的结构化结果，
+        结合全部书籍知识库和知乎集体智慧，让 5 位领域专家进行三阶段辩论。
+
+        Args:
+            text: 用户原始问题
+            verbose: 是否打印报告
+            dissection_result: 解剖分析结果（模式A），可选（自动运行）
+            resonance_result: 共鸣拓扑结果（模式B），可选（自动运行）
+
+        Returns:
+            dict: 辩论完整结果
+        """
+        # 如果没有提供分析结果，自动运行解剖
+        if not dissection_result and not resonance_result:
+            if verbose:
+                print("\n  [自动运行规则解剖分析作为辩论输入...]")
+            dissection_result = self.dissect(text, mode="a", verbose=False)
+            resonance_result = self.dissect(text, mode="b", verbose=False)
+
+        engine = DebateEngine(
+            kb=self.kb,
+            llm_client=self.client,
+            llm_model=self.model,
+            doubao_client=getattr(self, "doubao_client", None),
+            doubao_model=getattr(self, "doubao_model", None),
+        )
+
+        result = engine.debate(
+            text=text,
+            dissection_result=dissection_result,
+            resonance_result=resonance_result,
+        )
+
+        if verbose:
+            print_debate_report(result)
 
         return result
