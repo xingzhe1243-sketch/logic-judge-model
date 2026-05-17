@@ -254,19 +254,39 @@ function renderAnalyzeResult(data) {
   });
   // 逻辑猎手
   function renderHunter(mk, label) {
-    let h = md[mk]; if(!h||!h['问题列表']||!h['问题列表'].length) return;
+    const h = md[mk]; if(!h) return;
+    const hasProblems = h['问题列表'] && h['问题列表'].length;
+    const assess = h['整体评估']||{};
+    const hasAssess = assess['总体判断']||assess['论证稳健性']||assess['最严重问题'];
+    const err = h['error'];
+    if(!hasProblems && !hasAssess && !err) return;
     html += '<div class="card open"><div class="card-header"><span>'+label+'</span><span class="arrow">▼</span></div><div class="card-body">';
-    h['问题列表'].forEach(item => {
-      const sev = item['严重程度']||'中';
-      const cls2 = sev==='高'?'warn':sev==='中'?'':'ok';
-      html += '<div class="line '+cls2+'">'+esc(item['修正建议']||'')+'</div>';
-      html += '<div style="padding:0 0 2px 12px;font-size:0.76em;color:#657786;">↳ '+esc(item['问题类型']||'')+' ('+esc(sev)+') — '+esc((item['问题说明']||'').slice(0,150))+'</div>';
-    });
+    if(err) {
+      html += '<div class="line warn">请求失败: '+esc(err)+'</div>';
+    }
+    if(hasProblems) {
+      h['问题列表'].forEach(item => {
+        const sev = item['严重程度']||'中';
+        const cls2 = sev==='高'?'warn':sev==='中'?'':'ok';
+        html += '<div class="line '+cls2+'">'+esc(item['修正建议']||'')+'</div>';
+        html += '<div style="padding:0 0 2px 12px;font-size:0.76em;color:#657786;">↳ '+esc(item['问题类型']||'')+' ('+esc(sev)+') — '+esc((item['问题说明']||'').slice(0,150))+'</div>';
+      });
+    }
+    if(hasAssess) {
+      html += '<div style="padding:6px 0;font-size:0.82em;color:#a0aec0;">';
+      if(assess['论证稳健性']) html += '论证稳健性: <b>'+esc(assess['论证稳健性'])+'</b> ';
+      if(assess['总体判断']) html += esc(assess['总体判断']);
+      if(assess['最严重问题']&&!hasProblems) html += '最严重问题: '+esc(assess['最严重问题']);
+      if(assess['问题总数']!==undefined) html += ' | 问题总数: '+assess['问题总数'];
+      html += '</div>';
+    }
     html += '</div></div>';
   }
   renderHunter('logic_problem_hunter_1','🔍 逻辑猎手1 — DeepSeek 深度审查');
   renderHunter('logic_problem_hunter_2','🔍 逻辑猎手2 — 豆包大模型');
+  html = (window._historyQuestionBlock||'') + html;
   document.getElementById('results').innerHTML = html;
+  window._historyQuestionBlock = null;
   bindCards();
 }
 
@@ -360,7 +380,9 @@ function renderDissectResult(data) {
     preds.forEach(p => html += '<div class="item neutral">['+esc(p['置信度']||'?')+'] '+esc((p['text']||'').slice(0,200))+'</div>');
     html += '</div></div>';
   }
-  document.getElementById('results').innerHTML = html || '<div class="error">无结构化结果，请查看原始输出</div>';
+  html = (window._historyQuestionBlock||'') + (html || '<div class="error">无结构化结果，请查看原始输出</div>');
+  document.getElementById('results').innerHTML = html;
+  window._historyQuestionBlock = null;
   bindCards();
 }
 
@@ -403,7 +425,9 @@ function renderDebateResult(data) {
       html += '<div class="card"><div class="card-header"><span>📝 '+esc(phase)+'</span><span class="arrow">▼</span></div><div class="card-body"><pre>'+esc(typeof content==='string'?content:JSON.stringify(content,null,2))+'</pre></div></div>';
     });
   }
-  document.getElementById('results').innerHTML = html || '<div class="error">无辩论结果</div>';
+  html = (window._historyQuestionBlock||'') + (html || '<div class="error">无辩论结果</div>');
+  document.getElementById('results').innerHTML = html;
+  window._historyQuestionBlock = null;
   bindCards();
 }
 
@@ -418,7 +442,14 @@ function renderDeepResult(dissectData, debateData) {
   const debateEl = document.createElement('div');
   const oldResults = document.getElementById('results');
   // Render debate into a temp area then append
+  const savedBlock = window._historyQuestionBlock;
   renderDebateResult(debateData);
+  window._historyQuestionBlock = savedBlock;
+  if(savedBlock) {
+    const finalHtml = document.getElementById('results').innerHTML;
+    document.getElementById('results').innerHTML = savedBlock + finalHtml;
+    window._historyQuestionBlock = null;
+  }
 }
 
 // ===================== History =====================
@@ -460,6 +491,8 @@ async function fetchHistory() {
       const data = await res.json();
       const result = data.result||data;
       const atype = data.analysis_type||'analyze';
+      const typeLabel = {'analyze':'逻辑评分','dissect':'规则解剖','debate':'深度辩论'}[atype]||'分析';
+      window._historyQuestionBlock = '<div style="margin-bottom:8px"><span class="h-type '+atype+'" style="margin-right:8px;font-size:0.78em">'+typeLabel+'</span><span style="font-size:0.73em;color:#657786">'+esc(data.created_at||'')+'</span></div><div style="background:#1a232e;border:1px solid #2f3d4a;border-radius:8px;padding:14px 16px;margin-bottom:20px"><div style="font-size:0.73em;color:#657786;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px">分析问题</div><div style="font-size:0.95em;color:#e1e8ed;line-height:1.55;word-break:break-word">'+esc(data.text||'(无)')+'</div></div>';
       if(atype==='dissect') renderDissectResult(result);
       else if(atype==='debate') renderDebateResult(result);
       else renderAnalyzeResult(result);
